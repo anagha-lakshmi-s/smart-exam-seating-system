@@ -29,3 +29,34 @@ body { margin: 0; font-family: system-ui, Segoe UI, Arial, sans-serif; backgroun
 .stat-value { margin: 6px 0 0; font-size: 30px; font-weight: 600; }
 .stat-value.good { color: var(--good); }
 .stat-value.bad { color: var(--bad); }
+.toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.input { padding: 9px 12px; border: 1px solid #cfd8dc; border-radius: 8px; font-size: 14px; background: #fff; min-width: 220px; }
+.input:focus { outline: 2px solid var(--teal); border-color: transparent; }
+
+.table-wrap { background: var(--card); border-radius: 12px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 16px; font-size: 13px; color: var(--muted); border-bottom: 1px solid #e3e9eb; }
+td { padding: 12px 16px; border-bottom: 1px solid #eef2f3; font-size: 14px; }
+tr:last-child td { border-bottom: none; }
+
+.badge { background: #ddf0ee; color: #12786f; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.btn { border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; background: var(--teal); color: #fff; }
+.btn-danger { background: #fbe9e7; color: var(--bad); }
+.btn-danger:hover { background: #f7d4cf; }
+.empty { text-align: center; padding: 28px; color: var(--muted); margin: 0; }
+.spacer { flex: 1; }
+.actions { display: flex; gap: 8px; }
+.btn-light { background: #eef2f3; color: var(--text); }
+.btn-light:hover { background: #e0e7e9; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(18, 38, 47, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+.modal { background: #fff; border-radius: 14px; padding: 24px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+.modal-title { margin: 0 0 16px; font-size: 20px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-size: 14px; }
+.field .input { min-width: 0; width: 100%; }
+.error { color: var(--bad); font-size: 12px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+.section-gap { margin-bottom: 20px; }
+.badge-off { background: #fbe9e7; color: var(--bad); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 14px; }
+.capacity-box { background: #ddf0ee; color: #12786f; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin: 0 0 12px; }
