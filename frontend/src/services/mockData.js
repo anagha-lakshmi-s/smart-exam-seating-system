@@ -19,3 +19,17 @@ export const initialHalls = [
   { id: 2, name: 'Hall B', rows: 5, benches: 6, seatsPerBench: 2, available: true },
   { id: 3, name: 'Hall C', rows: 5, benches: 8, seatsPerBench: 2, available: true },
 ]
+export const initialSubjects = [
+  { id: 1, code: 'MA201', name: 'Engineering Mathematics' },
+  { id: 2, code: 'CS301', name: 'Database Management Systems' },
+  { id: 3, code: 'EC301', name: 'Digital Signal Processing' },
+  { id: 4, code: 'CE301', name: 'Structural Analysis' },
+  { id: 5, code: 'EE301', name: 'Circuit Theory' },
+]
+
+export const initialExams = [
+  { id: 1, subjectId: 1, date: '2026-10-20', startTime: '10:00', endTime: '13:00', branches: ['CSE', 'ECE', 'MECH'] },
+  { id: 2, subjectId: 4, date: '2026-10-20', startTime: '10:00', endTime: '13:00', branches: ['CIVIL'] },
+  { id: 3, subjectId: 5, date: '2026-10-20', startTime: '10:00', endTime: '13:00', branches: ['EEE'] },
+  { id: 4, subjectId: 2, date: '2026-10-22', startTime: '10:00', endTime: '13:00', branches: ['CSE'] },
+]
