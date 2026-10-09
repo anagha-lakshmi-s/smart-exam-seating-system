@@ -7,6 +7,7 @@ const links = [
   { to: '/subjects', label: 'Subjects' },
   { to: '/exams', label: 'Exams' },
   { to: '/halls', label: 'Halls' },
+  { to: '/generate', label: 'Generate' },
   { to: '/seating', label: 'Seating' },
   { to: '/find-my-seat', label: 'Find my seat' },
   { to: '/reports', label: 'Reports' },

@@ -60,3 +60,7 @@ export function buildMockSeating() {
 
   return { halls, unplaced }
 }
+export const EXAM_SLOT = { date: '20 Oct 2026', time: '10:00 - 13:00' }
+
+// Built once so every page (Seating, Find My Seat, Reports, Dashboard) sees the same data
+export const mockSeating = buildMockSeating()
