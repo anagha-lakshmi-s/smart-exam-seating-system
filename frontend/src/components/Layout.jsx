@@ -1,7 +1,8 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { APP_NAME } from '../utils/config'
+import { useAuth } from '../hooks/useAuth'
 
-const links = [
+const adminLinks = [
   { to: '/', label: 'Dashboard' },
   { to: '/students', label: 'Students' },
   { to: '/subjects', label: 'Subjects' },
@@ -13,7 +14,18 @@ const links = [
   { to: '/reports', label: 'Reports' },
 ]
 
+const studentLinks = [{ to: '/find-my-seat', label: 'Find my seat' }]
+
 export default function Layout() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const links = user.role === 'admin' ? adminLinks : studentLinks
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -30,6 +42,14 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+
+        <div className="sidebar-footer">
+          <div>
+            <p className="user-name">{user.name}</p>
+            <p className="user-role">{user.role === 'admin' ? 'Admin' : 'Student'}</p>
+          </div>
+          <button className="btn btn-light btn-block" onClick={handleLogout}>Log out</button>
+        </div>
       </aside>
       <main className="content">
         <Outlet />

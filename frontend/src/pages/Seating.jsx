@@ -74,6 +74,7 @@ export default function Seating() {
           <h3 className="modal-title">{selectedSeat.student.name}</h3>
           <p>Roll no: <strong>{selectedSeat.student.rollNo}</strong></p>
           <p>Branch: <strong>{selectedSeat.student.branch}</strong></p>
+          <p>Student type: <strong>{selectedSeat.student.type}</strong></p>
           <p>Subject: <strong>{BRANCH_SUBJECT[selectedSeat.student.branch]}</strong></p>
           <p>
             Seat: <strong>
@@ -91,6 +92,7 @@ export default function Seating() {
               <th>Roll no</th>
               <th>Name</th>
               <th>Branch</th>
+              <th>Type</th>
               <th>Reason</th>
             </tr>
           </thead>
@@ -100,6 +102,9 @@ export default function Seating() {
                 <td>{u.rollNo}</td>
                 <td>{u.name}</td>
                 <td><span className="badge">{u.branch}</span></td>
+                <td>
+                  <span className={u.type === 'Repeater' ? 'badge badge-warn' : 'badge'}>{u.type}</span>
+                </td>
                 <td>{u.reason}</td>
               </tr>
             ))}

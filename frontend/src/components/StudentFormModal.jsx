@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BRANCHES } from '../services/mockData'
+import { BRANCHES, STUDENT_TYPES } from '../services/mockData'
 
 export default function StudentFormModal({ student, existingStudents, onSave, onClose }) {
   const isEdit = Boolean(student)
@@ -8,6 +8,7 @@ export default function StudentFormModal({ student, existingStudents, onSave, on
     name: student?.name || '',
     branch: student?.branch || '',
     semester: student?.semester || '',
+    type: student?.type || 'Regular',
   })
   const [errors, setErrors] = useState({})
 
@@ -48,6 +49,7 @@ export default function StudentFormModal({ student, existingStudents, onSave, on
       name: form.name.trim(),
       branch: form.branch,
       semester: Number(form.semester),
+      type: form.type,
     })
   }
 
@@ -89,6 +91,15 @@ export default function StudentFormModal({ student, existingStudents, onSave, on
             onChange={handleChange}
           />
           {errors.semester && <small className="error">{errors.semester}</small>}
+        </label>
+
+        <label className="field">
+          <span>Student type</span>
+          <select className="input" name="type" value={form.type} onChange={handleChange}>
+            {STUDENT_TYPES.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </label>
 
         <div className="modal-actions">

@@ -31,7 +31,9 @@ export function buildMockSeating() {
             const branch = BRANCHES[(r + col) % BRANCHES.length]
             counters[branch] += 1
             const rollNo = `${PREFIX[branch]}${200 + counters[branch]}`
-            student = { rollNo, name: `Student ${rollNo}`, branch }
+            // Sample rule: every 6th student of a branch is a repeater
+            const type = counters[branch] % 6 === 0 ? 'Repeater' : 'Regular'
+            student = { rollNo, name: `Student ${rollNo}`, branch, type }
             assigned += 1
           }
           seats.push({ row: r + 1, bench: b + 1, seat: s + 1, student })
@@ -46,6 +48,7 @@ export function buildMockSeating() {
       rollNo: 'CS299',
       name: 'Student CS299',
       branch: 'CSE',
+      type: 'Regular',
       reason:
         'This student could not be assigned because all remaining available seats would violate the selected seating constraints.',
     },
@@ -53,6 +56,7 @@ export function buildMockSeating() {
       rollNo: 'ME299',
       name: 'Student ME299',
       branch: 'MECH',
+      type: 'Repeater',
       reason:
         'This student could not be assigned because all remaining available seats would violate the selected seating constraints.',
     },
@@ -60,7 +64,18 @@ export function buildMockSeating() {
 
   return { halls, unplaced }
 }
+
 export const EXAM_SLOT = { date: '20 Oct 2026', time: '10:00 - 13:00' }
 
 // Built once so every page (Seating, Find My Seat, Reports, Dashboard) sees the same data
 export const mockSeating = buildMockSeating()
+
+// True only if this register number exists in the seating data
+export function isKnownRoll(rollNo) {
+  const query = rollNo.trim().toUpperCase()
+  if (!query) return false
+  const seated = mockSeating.halls.some((h) =>
+    h.seats.some((s) => s.student && s.student.rollNo === query)
+  )
+  return seated || mockSeating.unplaced.some((u) => u.rollNo === query)
+}

@@ -73,6 +73,7 @@ export default function Students() {
               <th>Name</th>
               <th>Branch</th>
               <th>Semester</th>
+              <th>Type</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -83,6 +84,7 @@ export default function Students() {
                 <td>{s.name}</td>
                 <td><span className="badge">{s.branch}</span></td>
                 <td>{s.semester}</td>
+                <td><span className={s.type === 'Repeater' ? 'badge badge-warn' : 'badge'}>{s.type}</span></td>
                 <td>
                   <div className="actions">
                     <button className="btn btn-light" onClick={() => openEdit(s)}>Edit</button>
