@@ -12,3 +12,4 @@ public class HelloController {
         return Map.of("message", "Hello from SeatSync backend");
     }
 }
+
