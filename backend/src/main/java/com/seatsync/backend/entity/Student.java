@@ -44,6 +44,9 @@ public class Student {
     @Column(name = "student_type", nullable = false, length = 20)
     private String type = "Regular";
 
+    @Column(nullable = false)
+    private Boolean absent = false;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -61,4 +64,7 @@ public class Student {
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public Boolean getAbsent() { return absent; }
+    public void setAbsent(Boolean absent) { this.absent = absent; }
 }

@@ -2,6 +2,7 @@ package com.seatsync.backend.repository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     boolean existsBySubjectIdAndExamDateAndStartTimeAndIdNot(
             Long subjectId, LocalDate examDate, LocalTime startTime, Long id);
+
+    List<Exam> findByExamDateAndStartTimeOrderById(LocalDate examDate, LocalTime startTime);
 }
