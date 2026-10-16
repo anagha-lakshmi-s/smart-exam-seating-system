@@ -1,16 +1,19 @@
 import { useState } from 'react'
-import { initialExams, initialSubjects } from '../services/mockData'
+import { examsApi, subjectsApi, errorText } from '../services/api'
+import { useFetch } from '../hooks/useFetch'
 import ExamFormModal from '../components/ExamFormModal'
+import LoadState from '../components/LoadState'
+import Toast from '../components/Toast'
 
 export default function Exams() {
-  const [exams, setExams] = useState(initialExams)
+  const { data, loading, error, reload } = useFetch(() =>
+    Promise.all([examsApi.list(), subjectsApi.list()])
+  )
+  const exams = data ? data[0] : []
+  const subjects = data ? data[1] : []
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
-
-  function subjectLabel(id) {
-    const s = initialSubjects.find((x) => x.id === id)
-    return s ? `${s.code} - ${s.name}` : 'Unknown subject'
-  }
+  const [toast, setToast] = useState(null)
 
   function openAdd() {
     setEditing(null)
@@ -22,78 +25,87 @@ export default function Exams() {
     setModalOpen(true)
   }
 
-  function handleSave(data) {
-    if (data.id) {
-      setExams(exams.map((e) => (e.id === data.id ? data : e)))
-    } else {
-      const nextId = exams.length ? Math.max(...exams.map((e) => e.id)) + 1 : 1
-      setExams([...exams, { ...data, id: nextId }])
-    }
-    setModalOpen(false)
-  }
-
-  function handleDelete(id) {
-    if (window.confirm('Delete this exam?')) {
-      setExams(exams.filter((e) => e.id !== id))
+  async function handleSave(form) {
+    try {
+      if (form.id) await examsApi.update(form.id, form)
+      else await examsApi.create(form)
+      setModalOpen(false)
+      setToast({ type: 'success', message: form.id ? 'Exam updated.' : 'Exam added.' })
+      reload()
+    } catch (e) {
+      setToast({ type: 'error', message: errorText(e) })
     }
   }
 
-  const sorted = [...exams].sort((a, b) =>
-    (a.date + a.startTime).localeCompare(b.date + b.startTime)
-  )
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this exam?')) return
+    try {
+      await examsApi.remove(id)
+      setToast({ type: 'success', message: 'Exam deleted.' })
+      reload()
+    } catch (e) {
+      setToast({ type: 'error', message: errorText(e) })
+    }
+  }
 
   return (
     <div>
+      <Toast toast={toast} onClose={() => setToast(null)} />
       <h2 className="page-title">Exams</h2>
+      <LoadState loading={loading && !data} error={error} onRetry={reload} />
 
-      <div className="toolbar">
-        <span className="muted">{exams.length} exams</span>
-        <span className="spacer"></span>
-        <button className="btn" onClick={openAdd}>+ Add exam</button>
-      </div>
+      {data && (
+        <>
+          <div className="toolbar">
+            <span className="muted">{exams.length} exams</span>
+            <span className="spacer"></span>
+            <button className="btn" onClick={openAdd}>+ Add exam</button>
+          </div>
 
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Subject</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Branches</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((e) => (
-              <tr key={e.id}>
-                <td>{subjectLabel(e.subjectId)}</td>
-                <td>{e.date}</td>
-                <td>{e.startTime} - {e.endTime}</td>
-                <td>
-                  <div className="actions">
-                    {e.branches.map((b) => (
-                      <span key={b} className="badge">{b}</span>
-                    ))}
-                  </div>
-                </td>
-                <td>
-                  <div className="actions">
-                    <button className="btn btn-light" onClick={() => openEdit(e)}>Edit</button>
-                    <button className="btn btn-danger" onClick={() => handleDelete(e.id)}>Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {exams.length === 0 && <p className="empty">No exams yet. Click "Add exam" to create one.</p>}
-      </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Branches</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {exams.map((e) => (
+                  <tr key={e.id}>
+                    <td>{e.subjectCode} - {e.subjectName}</td>
+                    <td>{e.date}</td>
+                    <td>{e.startTime} - {e.endTime}</td>
+                    <td>
+                      <div className="actions">
+                        {e.branches.map((b) => (
+                          <span key={b} className="badge">{b}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="actions">
+                        <button className="btn btn-light" onClick={() => openEdit(e)}>Edit</button>
+                        <button className="btn btn-danger" onClick={() => handleDelete(e.id)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {exams.length === 0 && <p className="empty">No exams yet. Click "Add exam" to create one.</p>}
+          </div>
+        </>
+      )}
 
       {modalOpen && (
         <ExamFormModal
           exam={editing}
           existingExams={exams}
-          subjects={initialSubjects}
+          subjects={subjects}
           onSave={handleSave}
           onClose={() => setModalOpen(false)}
         />

@@ -1,13 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { seatingApi, errorText } from '../services/api'
+import { useFetch } from '../hooks/useFetch'
+import { slotKeyOf, slotLabel } from '../hooks/useArrangement'
 import StatCard from '../components/StatCard'
-import { mockSeating } from '../utils/mockSeating'
-import { calcCapacity } from '../utils/hall'
-
-const SLOTS = [
-  '20 Oct 2026, 10:00 - 13:00 (3 exams)',
-  '22 Oct 2026, 10:00 - 13:00 (1 exam)',
-]
+import LoadState from '../components/LoadState'
 
 const RULES = [
   { key: 'branchBeside', label: 'Different branch beside' },
@@ -17,7 +14,9 @@ const RULES = [
 ]
 
 export default function Generate() {
-  const [slot, setSlot] = useState(SLOTS[0])
+  const { data, loading, error, reload } = useFetch(seatingApi.slots)
+  const slots = data || []
+  const [chosen, setChosen] = useState('')
   const [rules, setRules] = useState({
     branchBeside: true,
     subjectBeside: true,
@@ -25,59 +24,84 @@ export default function Generate() {
     subjectFront: false,
   })
   const [status, setStatus] = useState('idle') // idle | loading | done
-  const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
+  const [result, setResult] = useState(null)
+
+  const activeSlot = slots.find((s) => slotKeyOf(s) === chosen) || slots[0]
 
   function toggle(key) {
     setRules({ ...rules, [key]: !rules[key] })
   }
 
-  function handleGenerate() {
+  async function handleGenerate() {
+    if (!activeSlot) return
     if (!Object.values(rules).some(Boolean)) {
-      setError('Enable at least one seating constraint.')
+      setFormError('Enable at least one seating constraint.')
       return
     }
-    setError('')
+    setFormError('')
+    setResult(null)
     setStatus('loading')
-    setTimeout(() => setStatus('done'), 1500)
+    try {
+      const res = await seatingApi.generate({
+        date: activeSlot.date,
+        startTime: activeSlot.startTime,
+        ...rules,
+      })
+      setResult(res)
+      setStatus('done')
+      reload()
+    } catch (e) {
+      setFormError(errorText(e))
+      setStatus('idle')
+    }
   }
-
-  const halls = mockSeating.halls
-  const totalSeats = halls.reduce((sum, h) => sum + calcCapacity(h.hall), 0)
-  const assigned = halls.reduce((sum, h) => sum + h.assigned, 0)
-  const unplaced = mockSeating.unplaced.length
 
   return (
     <div>
       <h2 className="page-title">Generate seating</h2>
+      <LoadState loading={loading && !data} error={error} onRetry={reload} />
 
-      <div className="panel">
-        <label className="field">
-          <span>Exam slot</span>
-          <select className="input" value={slot} onChange={(e) => setSlot(e.target.value)}>
-            {SLOTS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </label>
+      {data && slots.length === 0 && (
+        <p className="notice notice-warn">
+          No exams are scheduled yet. <Link to="/exams">Add an exam</Link> first.
+        </p>
+      )}
 
-        <div className="field">
-          <span>Seating constraints</span>
-          <div className="check-list">
-            {RULES.map((r) => (
-              <label key={r.key} className="check">
-                <input type="checkbox" checked={rules[r.key]} onChange={() => toggle(r.key)} />
-                <span>{r.label}</span>
-              </label>
-            ))}
+      {slots.length > 0 && (
+        <div className="panel">
+          <label className="field">
+            <span>Exam slot</span>
+            <select
+              className="input"
+              value={activeSlot ? slotKeyOf(activeSlot) : ''}
+              onChange={(e) => setChosen(e.target.value)}
+            >
+              {slots.map((s) => (
+                <option key={slotKeyOf(s)} value={slotKeyOf(s)}>{slotLabel(s)}</option>
+              ))}
+            </select>
+          </label>
+
+          <div className="field">
+            <span>Seating constraints</span>
+            <div className="check-list">
+              {RULES.map((r) => (
+                <label key={r.key} className="check">
+                  <input type="checkbox" checked={rules[r.key]} onChange={() => toggle(r.key)} />
+                  <span>{r.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
+
+          {formError && <p className="notice notice-error">{formError}</p>}
+
+          <button className="btn" onClick={handleGenerate} disabled={status === 'loading'}>
+            {status === 'loading' ? 'Generating...' : 'Generate seating arrangement'}
+          </button>
         </div>
-
-        {error && <p className="notice notice-error">{error}</p>}
-
-        <button className="btn" onClick={handleGenerate} disabled={status === 'loading'}>
-          {status === 'loading' ? 'Generating...' : 'Generate seating arrangement'}
-        </button>
-      </div>
+      )}
 
       {status === 'loading' && (
         <div className="panel loading-box">
@@ -86,22 +110,26 @@ export default function Generate() {
         </div>
       )}
 
-      {status === 'done' && (
+      {status === 'done' && result && (
         <div>
           <h3 className="sub-title">Arrangement summary</h3>
           <div className="stat-grid section-gap">
-            <StatCard label="Total students" value={assigned + unplaced} />
-            <StatCard label="Total seats" value={totalSeats} />
-            <StatCard label="Halls used" value={halls.length} />
-            <StatCard label="Assigned" value={assigned} tone="good" />
-            <StatCard label="Unplaced" value={unplaced} tone="bad" />
-            <StatCard label="Empty seats" value={totalSeats - assigned} />
-            <StatCard label="Constraint violations" value={0} tone="good" />
+            <StatCard label="Total students" value={result.summary.totalStudents} />
+            <StatCard label="Total seats" value={result.summary.totalSeats} />
+            <StatCard label="Halls used" value={result.summary.hallsUsed} />
+            <StatCard label="Assigned" value={result.summary.assigned} tone="good" />
+            <StatCard label="Unplaced" value={result.summary.unplaced} tone={result.summary.unplaced > 0 ? 'bad' : ''} />
+            <StatCard label="Empty seats" value={result.summary.emptySeats} />
+            <StatCard label="Constraint violations" value={result.summary.violations} tone="good" />
           </div>
-          <p className="notice notice-warn">
-            Demo result: this uses sample data until the backend seating algorithm is connected.
-          </p>
-          <Link to="/seating" className="btn link-btn">View seating grid</Link>
+          {result.summary.unplaced > 0 && (
+            <p className="notice notice-warn">
+              {result.summary.unplaced} students could not be placed. The reasons are on the Seating page.
+            </p>
+          )}
+          <Link to={`/seating?slot=${slotKeyOf(activeSlot)}`} className="btn link-btn">
+            View seating grid
+          </Link>
         </div>
       )}
     </div>

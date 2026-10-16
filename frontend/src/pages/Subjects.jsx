@@ -1,12 +1,17 @@
 import { useState } from 'react'
-import { initialSubjects } from '../services/mockData'
+import { subjectsApi, errorText } from '../services/api'
+import { useFetch } from '../hooks/useFetch'
 import SubjectFormModal from '../components/SubjectFormModal'
+import LoadState from '../components/LoadState'
+import Toast from '../components/Toast'
 
 export default function Subjects() {
-  const [subjects, setSubjects] = useState(initialSubjects)
+  const { data, loading, error, reload } = useFetch(subjectsApi.list)
+  const subjects = data || []
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [toast, setToast] = useState(null)
 
   const visible = subjects.filter((s) => {
     const text = search.toLowerCase()
@@ -23,64 +28,77 @@ export default function Subjects() {
     setModalOpen(true)
   }
 
-  function handleSave(data) {
-    if (data.id) {
-      setSubjects(subjects.map((s) => (s.id === data.id ? data : s)))
-    } else {
-      const nextId = subjects.length ? Math.max(...subjects.map((s) => s.id)) + 1 : 1
-      setSubjects([...subjects, { ...data, id: nextId }])
+  async function handleSave(form) {
+    try {
+      if (form.id) await subjectsApi.update(form.id, form)
+      else await subjectsApi.create(form)
+      setModalOpen(false)
+      setToast({ type: 'success', message: form.id ? 'Subject updated.' : 'Subject added.' })
+      reload()
+    } catch (e) {
+      setToast({ type: 'error', message: errorText(e) })
     }
-    setModalOpen(false)
   }
 
-  function handleDelete(id) {
-    if (window.confirm('Delete this subject?')) {
-      setSubjects(subjects.filter((s) => s.id !== id))
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this subject?')) return
+    try {
+      await subjectsApi.remove(id)
+      setToast({ type: 'success', message: 'Subject deleted.' })
+      reload()
+    } catch (e) {
+      setToast({ type: 'error', message: errorText(e) })
     }
   }
 
   return (
     <div>
+      <Toast toast={toast} onClose={() => setToast(null)} />
       <h2 className="page-title">Subjects</h2>
+      <LoadState loading={loading && !data} error={error} onRetry={reload} />
 
-      <div className="toolbar">
-        <input
-          className="input"
-          placeholder="Search by code or name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <span className="muted">{visible.length} subjects</span>
-        <span className="spacer"></span>
-        <button className="btn" onClick={openAdd}>+ Add subject</button>
-      </div>
+      {data && (
+        <>
+          <div className="toolbar">
+            <input
+              className="input"
+              placeholder="Search by code or name"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <span className="muted">{visible.length} subjects</span>
+            <span className="spacer"></span>
+            <button className="btn" onClick={openAdd}>+ Add subject</button>
+          </div>
 
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>Name</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((s) => (
-              <tr key={s.id}>
-                <td><span className="badge">{s.code}</span></td>
-                <td>{s.name}</td>
-                <td>
-                  <div className="actions">
-                    <button className="btn btn-light" onClick={() => openEdit(s)}>Edit</button>
-                    <button className="btn btn-danger" onClick={() => handleDelete(s.id)}>Delete</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {visible.length === 0 && <p className="empty">No subjects found.</p>}
-      </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Name</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((s) => (
+                  <tr key={s.id}>
+                    <td><span className="badge">{s.code}</span></td>
+                    <td>{s.name}</td>
+                    <td>
+                      <div className="actions">
+                        <button className="btn btn-light" onClick={() => openEdit(s)}>Edit</button>
+                        <button className="btn btn-danger" onClick={() => handleDelete(s.id)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {visible.length === 0 && <p className="empty">No subjects found.</p>}
+          </div>
+        </>
+      )}
 
       {modalOpen && (
         <SubjectFormModal
