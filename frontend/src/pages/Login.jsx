@@ -1,7 +1,7 @@
-import { isKnownRoll } from '../utils/mockSeating'
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { studentsApi } from '../services/api'
 import { APP_NAME } from '../utils/config'
 
 export default function Login() {
@@ -12,6 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [rollNo, setRollNo] = useState('')
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
 
   if (user) {
     return <Navigate to={user.role === 'admin' ? '/' : '/find-my-seat'} replace />
@@ -22,7 +23,7 @@ export default function Login() {
     setError('')
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     setError('')
 
@@ -36,13 +37,28 @@ export default function Login() {
         return
       }
       navigate('/')
-    } else {
-        if (!isKnownRoll(rollNo)) {
+      return
+    }
+
+    const query = rollNo.trim().toUpperCase()
+    if (!query) {
+      setError('Please enter a valid register number.')
+      return
+    }
+    setBusy(true)
+    try {
+      const students = await studentsApi.list()
+      const found = students.some((s) => s.rollNo.toUpperCase() === query)
+      if (!found) {
         setError('Please enter a valid register number.')
         return
       }
-      loginStudent(rollNo.trim())
+      loginStudent(query)
       navigate('/find-my-seat')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -88,10 +104,10 @@ export default function Login() {
             </>
           ) : (
             <label className="field">
-            <span>Register number</span>
+              <span>Register number</span>
               <input
                 className="input"
-                placeholder="e.g. CS201"
+                placeholder="e.g. CS001"
                 value={rollNo}
                 onChange={(e) => setRollNo(e.target.value)}
               />
@@ -99,7 +115,9 @@ export default function Login() {
           )}
 
           {error && <p className="notice notice-error">{error}</p>}
-          <button className="btn" type="submit">Log in</button>
+          <button className="btn" type="submit" disabled={busy}>
+            {busy ? 'Checking...' : 'Log in'}
+          </button>
         </form>
 
         <p className="hint">Demo admin login: admin / admin123</p>
