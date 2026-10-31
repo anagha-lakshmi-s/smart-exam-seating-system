@@ -53,6 +53,12 @@ public class StudentService {
         return repository.save(existing);
     }
 
+    public Student setAbsent(Long id, boolean absent) {
+        Student student = getById(id);
+        student.setAbsent(absent);
+        return repository.save(student);
+    }
+
     public void delete(Long id) {
         repository.delete(getById(id));
     }

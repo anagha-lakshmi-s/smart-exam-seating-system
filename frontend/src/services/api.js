@@ -55,7 +55,11 @@ function crud(name) {
   }
 }
 
-export const studentsApi = crud('students')
+export const studentsApi = {
+  ...crud('students'),
+  setAbsent: (id, value) => request(`/students/${id}/absent?value=${value}`, { method: 'PATCH' }),
+  importRows: (rows) => request('/students/import', { method: 'POST', body: { rows } }),
+}
 export const subjectsApi = crud('subjects')
 export const hallsApi = crud('halls')
 export const examsApi = crud('exams')
@@ -65,4 +69,8 @@ export const seatingApi = {
   generate: (body) => request('/seating/generate', { method: 'POST', body }),
   get: (date, startTime) => request(`/seating?date=${date}&startTime=${startTime}`),
   mySeat: (rollNo) => request(`/seating/student/${encodeURIComponent(rollNo)}`),
+}
+export const authApi = {
+  admin: (body) => request('/auth/admin', { method: 'POST', body }),
+  student: (body) => request('/auth/student', { method: 'POST', body }),
 }

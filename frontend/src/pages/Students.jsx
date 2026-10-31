@@ -3,6 +3,7 @@ import { BRANCHES } from '../services/mockData'
 import { studentsApi, errorText } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import StudentFormModal from '../components/StudentFormModal'
+import ImportStudentsModal from '../components/ImportStudentsModal'
 import LoadState from '../components/LoadState'
 import Toast from '../components/Toast'
 
@@ -12,6 +13,7 @@ export default function Students() {
   const [search, setSearch] = useState('')
   const [branch, setBranch] = useState('All')
   const [modalOpen, setModalOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toast, setToast] = useState(null)
 
@@ -22,6 +24,8 @@ export default function Students() {
     const matchesBranch = branch === 'All' || s.branch === branch
     return matchesSearch && matchesBranch
   })
+
+  const absentCount = students.filter((s) => s.absent).length
 
   function openAdd() {
     setEditing(null)
@@ -39,6 +43,19 @@ export default function Students() {
       else await studentsApi.create(form)
       setModalOpen(false)
       setToast({ type: 'success', message: form.id ? 'Student updated.' : 'Student added.' })
+      reload()
+    } catch (e) {
+      setToast({ type: 'error', message: errorText(e) })
+    }
+  }
+
+  async function toggleAbsent(s) {
+    try {
+      await studentsApi.setAbsent(s.id, !s.absent)
+      setToast({
+        type: 'success',
+        message: `${s.name} marked ${s.absent ? 'present' : 'absent'}. Regenerate the seating to apply this.`,
+      })
       reload()
     } catch (e) {
       setToast({ type: 'error', message: errorText(e) })
@@ -77,8 +94,12 @@ export default function Students() {
                 <option key={b} value={b}>{b}</option>
               ))}
             </select>
-            <span className="muted">{visible.length} of {students.length} students</span>
+            <span className="muted">
+              {visible.length} of {students.length} students
+              {absentCount > 0 ? `, ${absentCount} absent` : ''}
+            </span>
             <span className="spacer"></span>
+            <button className="btn btn-light" onClick={() => setImportOpen(true)}>Import CSV</button>
             <button className="btn" onClick={openAdd}>+ Add student</button>
           </div>
 
@@ -91,6 +112,7 @@ export default function Students() {
                   <th>Branch</th>
                   <th>Semester</th>
                   <th>Type</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -105,8 +127,16 @@ export default function Students() {
                       <span className={s.type === 'Repeater' ? 'badge badge-warn' : 'badge'}>{s.type}</span>
                     </td>
                     <td>
+                      <span className={s.absent ? 'badge badge-off' : 'badge'}>
+                        {s.absent ? 'Absent' : 'Present'}
+                      </span>
+                    </td>
+                    <td>
                       <div className="actions">
                         <button className="btn btn-light" onClick={() => openEdit(s)}>Edit</button>
+                        <button className="btn btn-light" onClick={() => toggleAbsent(s)}>
+                          {s.absent ? 'Mark present' : 'Mark absent'}
+                        </button>
                         <button className="btn btn-danger" onClick={() => handleDelete(s.id)}>Delete</button>
                       </div>
                     </td>
@@ -126,6 +156,10 @@ export default function Students() {
           onSave={handleSave}
           onClose={() => setModalOpen(false)}
         />
+      )}
+
+      {importOpen && (
+        <ImportStudentsModal onImported={reload} onClose={() => setImportOpen(false)} />
       )}
     </div>
   )

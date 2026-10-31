@@ -1,0 +1,7 @@
+rollNo,name,branch,semester,type
+IM001,Import One,CSE,5,Regular
+IM002,Import Two,ECE,5,Repeater
+IM003,,MECH,5,Regular
+IM004,Import Four,XYZ,5,Regular
+IM005,Import Five,CIVIL,9,Regular
+CS001,Already Exists,CSE,5,Regular
