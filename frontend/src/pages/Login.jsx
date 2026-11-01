@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { studentsApi } from '../services/api'
+import { errorText } from '../services/api'
 import { APP_NAME } from '../utils/config'
 
 export default function Login() {
@@ -27,36 +27,26 @@ export default function Login() {
     e.preventDefault()
     setError('')
 
-    if (mode === 'admin') {
-      if (!username.trim() || !password) {
-        setError('Enter both username and password.')
-        return
-      }
-      if (!loginAdmin(username.trim(), password)) {
-        setError('Incorrect username or password.')
-        return
-      }
-      navigate('/')
+    if (mode === 'admin' && (!username.trim() || !password)) {
+      setError('Enter both username and password.')
       return
     }
-
-    const query = rollNo.trim().toUpperCase()
-    if (!query) {
+    if (mode === 'student' && !rollNo.trim()) {
       setError('Please enter a valid register number.')
       return
     }
+
     setBusy(true)
     try {
-      const students = await studentsApi.list()
-      const found = students.some((s) => s.rollNo.toUpperCase() === query)
-      if (!found) {
-        setError('Please enter a valid register number.')
-        return
+      if (mode === 'admin') {
+        await loginAdmin(username.trim(), password)
+        navigate('/')
+      } else {
+        await loginStudent(rollNo.trim())
+        navigate('/find-my-seat')
       }
-      loginStudent(query)
-      navigate('/find-my-seat')
     } catch (err) {
-      setError(err.message)
+      setError(errorText(err))
     } finally {
       setBusy(false)
     }

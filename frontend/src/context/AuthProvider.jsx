@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { AuthContext } from './authContext'
+import { authApi } from '../services/api'
 
-// Demo account until the backend login is built
-const ADMINS = [{ username: 'admin', password: 'admin123', name: 'Administrator' }]
 const STORAGE_KEY = 'seatiq_user'
 
 function loadUser() {
@@ -21,15 +20,15 @@ export default function AuthProvider({ children }) {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(u))
   }
 
-  function loginAdmin(username, password) {
-    const match = ADMINS.find((a) => a.username === username && a.password === password)
-    if (!match) return false
-    saveUser({ role: 'admin', name: match.name })
-    return true
+  // Both login functions ask the backend. They throw an error if the login is refused.
+  async function loginAdmin(username, password) {
+    const res = await authApi.admin({ username, password })
+    saveUser({ role: res.role, name: res.name })
   }
 
-  function loginStudent(rollNo) {
-    saveUser({ role: 'student', name: rollNo.toUpperCase() })
+  async function loginStudent(rollNo) {
+    const res = await authApi.student({ rollNo })
+    saveUser({ role: res.role, name: res.name })
   }
 
   function logout() {
