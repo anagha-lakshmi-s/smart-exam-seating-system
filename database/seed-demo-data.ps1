@@ -1,7 +1,10 @@
+param(
+    [string]$ApiBase = "http://localhost:8080/api"
+)
 # Creates demo data for SeatIQ: subjects, halls, exams and 180 students.
 # Safe to run more than once: items that already exist are skipped.
 
-$base = "http://localhost:8080/api"
+$base = $ApiBase.TrimEnd('/')
 $created = 0
 $skipped = 0
 
