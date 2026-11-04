@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -31,6 +32,7 @@ export default function Login() {
       setError('Enter both username and password.')
       return
     }
+
     if (mode === 'student' && !rollNo.trim()) {
       setError('Please enter a valid register number.')
       return
@@ -56,7 +58,9 @@ export default function Login() {
     <div className="login-page">
       <div className="login-card">
         <h1 className="login-brand">{APP_NAME}</h1>
-        <p className="login-sub">Smart Exam Seating &amp; Hall Allocation System</p>
+        <p className="login-sub">
+          Smart Exam Seating &amp; Hall Allocation System
+        </p>
 
         <div className="tabs">
           <button
@@ -66,6 +70,7 @@ export default function Login() {
           >
             Admin
           </button>
+
           <button
             type="button"
             className={mode === 'student' ? 'tab tab-active' : 'tab'}
@@ -80,8 +85,13 @@ export default function Login() {
             <>
               <label className="field">
                 <span>Username</span>
-                <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} />
+                <input
+                  className="input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
               </label>
+
               <label className="field">
                 <span>Password</span>
                 <input
@@ -105,12 +115,15 @@ export default function Login() {
           )}
 
           {error && <p className="notice notice-error">{error}</p>}
+
           <button className="btn" type="submit" disabled={busy}>
             {busy ? 'Checking...' : 'Log in'}
           </button>
         </form>
 
-        <p className="hint">Demo admin login: admin / admin123</p>
+        {import.meta.env.DEV && (
+          <p className="hint">Local demo login: admin / admin123</p>
+        )}
       </div>
     </div>
   )
