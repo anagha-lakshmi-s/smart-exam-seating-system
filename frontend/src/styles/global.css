@@ -365,3 +365,15 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary)
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+/* Occupied seats with hidden student details */
+.seat-occupied {
+  background: #d9dee5;
+  color: #5f6b7a;
+  border: 2px solid transparent;
+  cursor: default;
+}
+
+.seat.seat-occupied:hover {
+  transform: none;
+  box-shadow: none;
+}

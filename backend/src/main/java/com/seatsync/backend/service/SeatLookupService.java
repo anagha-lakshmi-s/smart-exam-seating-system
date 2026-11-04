@@ -1,3 +1,4 @@
+
 package com.seatsync.backend.service;
 
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.seatsync.backend.dto.ArrangementResponse.HallArrangement;
+import com.seatsync.backend.dto.ArrangementResponse.SeatCell;
 import com.seatsync.backend.dto.ArrangementResponse.StudentInfo;
 import com.seatsync.backend.dto.MySeatResponse;
 import com.seatsync.backend.dto.SlotResponse;
@@ -48,23 +50,29 @@ public class SeatLookupService {
     public List<SlotResponse> getSlots() {
         List<Exam> exams = examRepository.findAll(Sort.by("examDate", "startTime"));
         Map<String, List<Exam>> grouped = new LinkedHashMap<>();
+
         for (Exam exam : exams) {
             String key = exam.getExamDate() + "|" + exam.getStartTime();
             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(exam);
         }
 
         List<SlotResponse> slots = new ArrayList<>();
+
         for (List<Exam> group : grouped.values()) {
             Exam first = group.get(0);
+
             LocalTime end = group.stream()
                     .map(Exam::getEndTime)
                     .max(Comparator.naturalOrder())
                     .orElse(first.getEndTime());
+
             boolean generated = seatingRepository.existsBySlotDateAndSlotStart(
                     first.getExamDate(), first.getStartTime());
-            slots.add(new SlotResponse(first.getExamDate().toString(), first.getStartTime().toString(),
-                    end.toString(), group.size(), generated));
+
+            slots.add(new SlotResponse(first.getExamDate().toString(),
+                    first.getStartTime().toString(), end.toString(), group.size(), generated));
         }
+
         return slots;
     }
 
@@ -73,13 +81,15 @@ public class SeatLookupService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "No student found with this roll number. Please check and try again."));
 
-        // Newest first. Pick the soonest slot from today onwards, otherwise the latest one.
         List<Seating> all = seatingRepository.findByStudentIdOrderBySlotDateDescSlotStartDesc(student.getId());
+
         if (all.isEmpty()) {
             throw new ResourceNotFoundException("No seat has been generated for this student yet.");
         }
+
         LocalDate today = LocalDate.now();
         Seating chosen = all.get(0);
+
         for (int i = all.size() - 1; i >= 0; i--) {
             if (!all.get(i).getSlotDate().isBefore(today)) {
                 chosen = all.get(i);
@@ -99,14 +109,47 @@ public class SeatLookupService {
 
         Seat seat = chosen.getSeat();
         Hall hall = seat.getHall();
+
         Map<Long, Seating> bySeat = new HashMap<>();
-        for (Seating s : seatingRepository.findBySlotDateAndSlotStart(chosen.getSlotDate(), chosen.getSlotStart())) {
+
+        for (Seating s : seatingRepository.findBySlotDateAndSlotStart(
+                chosen.getSlotDate(), chosen.getSlotStart())) {
             if (s.getSeat() != null) {
                 bySeat.put(s.getSeat().getId(), s);
             }
         }
-        HallArrangement hallArrangement = seatingService.buildHallArrangement(hall, bySeat);
+
+        HallArrangement originalArrangement =
+                seatingService.buildHallArrangement(hall, bySeat);
+
+        // Keep this student's details so their seat can be highlighted.
+        // Hide all other students' personal details.
+        List<SeatCell> safeSeats = originalArrangement.seats().stream()
+                .map(cell -> {
+                    if (cell.student() == null) {
+                        return cell;
+                    }
+
+                    if (cell.seatId().equals(seat.getId())) {
+                        return cell;
+                    }
+
+                    return new SeatCell(
+                            cell.seatId(),
+                            cell.row(),
+                            cell.bench(),
+                            cell.seat(),
+                            new StudentInfo(null, null, null, null, null));
+                })
+                .toList();
+
+        HallArrangement hallArrangement = new HallArrangement(
+                originalArrangement.hall(),
+                safeSeats,
+                originalArrangement.assigned());
+
         return new MySeatResponse("ASSIGNED", info, date, start, end,
-                hall.getName(), seat.getRowNo(), seat.getBenchNo(), seat.getSeatNo(), null, hallArrangement);
+                hall.getName(), seat.getRowNo(), seat.getBenchNo(),
+                seat.getSeatNo(), null, hallArrangement);
     }
 }
