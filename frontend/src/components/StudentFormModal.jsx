@@ -1,15 +1,19 @@
+
 import { useState } from 'react'
 import { BRANCHES, STUDENT_TYPES } from '../services/mockData'
 
 export default function StudentFormModal({ student, existingStudents, onSave, onClose }) {
   const isEdit = Boolean(student)
+
   const [form, setForm] = useState({
     rollNo: student?.rollNo || '',
     name: student?.name || '',
     branch: student?.branch || '',
     semester: student?.semester || '',
     type: student?.type || 'Regular',
+    password: '',
   })
+
   const [errors, setErrors] = useState({})
 
   function handleChange(e) {
@@ -35,12 +39,23 @@ export default function StudentFormModal({ student, existingStudents, onSave, on
     if (!Number.isInteger(sem) || sem < 1 || sem > 8) {
       found.semester = 'Semester must be a number from 1 to 8.'
     }
+
+    if (!isEdit && !form.password) {
+      found.password = 'Password is required.'
+    } else if (
+      form.password &&
+      (form.password.length < 8 || form.password.length > 72)
+    ) {
+      found.password = 'Password must contain between 8 and 72 characters.'
+    }
+
     return found
   }
 
   function handleSubmit() {
     const found = validate()
     setErrors(found)
+
     if (Object.keys(found).length > 0) return
 
     onSave({
@@ -50,6 +65,7 @@ export default function StudentFormModal({ student, existingStudents, onSave, on
       branch: form.branch,
       semester: Number(form.semester),
       type: form.type,
+      password: form.password,
     })
   }
 
@@ -100,6 +116,20 @@ export default function StudentFormModal({ student, existingStudents, onSave, on
               <option key={t} value={t}>{t}</option>
             ))}
           </select>
+        </label>
+
+        <label className="field">
+          <span>{isEdit ? 'New password (optional)' : 'Student password'}</span>
+          <input
+            className="input"
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder={isEdit ? 'Leave blank to keep current password' : 'At least 8 characters'}
+            maxLength={72}
+          />
+          {errors.password && <small className="error">{errors.password}</small>}
         </label>
 
         <div className="modal-actions">

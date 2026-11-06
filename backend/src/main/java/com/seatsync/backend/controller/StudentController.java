@@ -1,3 +1,4 @@
+
 package com.seatsync.backend.controller;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import com.seatsync.backend.dto.StudentImportRequest;
 import com.seatsync.backend.dto.StudentImportResult;
 import com.seatsync.backend.entity.Student;
 import com.seatsync.backend.service.StudentImportService;
+import com.seatsync.backend.service.StudentPasswordService;
 import com.seatsync.backend.service.StudentService;
 
 import jakarta.validation.Valid;
@@ -29,10 +31,15 @@ public class StudentController {
 
     private final StudentService service;
     private final StudentImportService importService;
+    private final StudentPasswordService passwordService;
 
-    public StudentController(StudentService service, StudentImportService importService) {
+    public StudentController(
+            StudentService service,
+            StudentImportService importService,
+            StudentPasswordService passwordService) {
         this.service = service;
         this.importService = importService;
+        this.passwordService = passwordService;
     }
 
     @GetMapping
@@ -64,6 +71,12 @@ public class StudentController {
     @PostMapping("/import")
     public StudentImportResult importStudents(@RequestBody StudentImportRequest request) {
         return importService.importStudents(request);
+    }
+
+    @PostMapping("/passwords/bulk")
+    public StudentPasswordService.BulkPasswordResult assignPasswords(
+            @RequestBody StudentPasswordService.BulkPasswordRequest request) {
+        return passwordService.assignPasswords(request);
     }
 
     @DeleteMapping("/{id}")

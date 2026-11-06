@@ -13,7 +13,9 @@ public class CorsConfig implements WebMvcConfigurer {
 
     private final String[] allowedOrigins;
 
-    public CorsConfig(@Value("${seatiq.cors.allowed-origins:http://localhost:5173}") String origins) {
+    public CorsConfig(
+            @Value("${seatiq.cors.allowed-origins:http://localhost:5173}") String origins) {
+
         this.allowedOrigins = Arrays.stream(origins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -24,6 +26,9 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins(allowedOrigins)
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE");
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("Content-Type", "Authorization")
+                .allowCredentials(false)
+                .maxAge(3600);
     }
 }

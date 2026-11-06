@@ -1,4 +1,7 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+
+const STORAGE_KEY = 'seatiq_user'
 
 export class ApiError extends Error {
   constructor(message, status, fieldErrors) {
@@ -10,20 +13,43 @@ export class ApiError extends Error {
 
 async function request(path, options = {}) {
   let response
+
   try {
+    let token = null
+
+    try {
+      const user = JSON.parse(sessionStorage.getItem(STORAGE_KEY))
+      token = user?.accessToken || null
+    } catch {
+      token = null
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+
     response = await fetch(BASE_URL + path, {
       method: options.method || 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined
     })
   } catch {
-    throw new ApiError('Cannot reach the server. Make sure the backend is running.', 0)
+    throw new ApiError(
+      'Cannot reach the server. Make sure the backend is running.',
+      0
+    )
   }
 
   if (response.status === 204) return null
 
   const text = await response.text()
   let data = null
+
   try {
     data = text ? JSON.parse(text) : null
   } catch {
@@ -37,10 +63,10 @@ async function request(path, options = {}) {
       data?.errors
     )
   }
+
   return data
 }
 
-// First field error if there is one, otherwise the general message
 export function errorText(error) {
   const first = Object.values(error?.fieldErrors || {})[0]
   return first || error?.message || 'Something went wrong.'
@@ -51,26 +77,32 @@ function crud(name) {
     list: () => request(`/${name}`),
     create: (data) => request(`/${name}`, { method: 'POST', body: data }),
     update: (id, data) => request(`/${name}/${id}`, { method: 'PUT', body: data }),
-    remove: (id) => request(`/${name}/${id}`, { method: 'DELETE' }),
+    remove: (id) => request(`/${name}/${id}`, { method: 'DELETE' })
   }
 }
 
 export const studentsApi = {
   ...crud('students'),
-  setAbsent: (id, value) => request(`/students/${id}/absent?value=${value}`, { method: 'PATCH' }),
-  importRows: (rows) => request('/students/import', { method: 'POST', body: { rows } }),
+  setAbsent: (id, value) =>
+    request(`/students/${id}/absent?value=${value}`, { method: 'PATCH' }),
+  importRows: (rows) =>
+    request('/students/import', { method: 'POST', body: { rows } })
 }
+
 export const subjectsApi = crud('subjects')
 export const hallsApi = crud('halls')
 export const examsApi = crud('exams')
 
 export const seatingApi = {
   slots: () => request('/seating/slots'),
-  generate: (body) => request('/seating/generate', { method: 'POST', body }),
-  get: (date, startTime) => request(`/seating?date=${date}&startTime=${startTime}`),
-  mySeat: (rollNo) => request(`/seating/student/${encodeURIComponent(rollNo)}`),
+  generate: (body) =>
+    request('/seating/generate', { method: 'POST', body }),
+  get: (date, startTime) =>
+    request(`/seating?date=${date}&startTime=${startTime}`),
+  mySeat: () => request('/seating/me')
 }
+
 export const authApi = {
   admin: (body) => request('/auth/admin', { method: 'POST', body }),
-  student: (body) => request('/auth/student', { method: 'POST', body }),
+  student: (body) => request('/auth/student', { method: 'POST', body })
 }

@@ -1,4 +1,8 @@
+
 package com.seatsync.backend.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -6,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -47,6 +52,14 @@ public class Student {
     @Column(nullable = false)
     private Boolean absent = false;
 
+    @JsonIgnore
+    @Column(name = "password_hash", length = 100)
+    private String passwordHash;
+
+    @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -67,4 +80,10 @@ public class Student {
 
     public Boolean getAbsent() { return absent; }
     public void setAbsent(Boolean absent) { this.absent = absent; }
+
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }

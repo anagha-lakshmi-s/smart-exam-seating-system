@@ -12,6 +12,7 @@ export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [rollNo, setRollNo] = useState('')
+  const [studentPassword, setStudentPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -33,8 +34,8 @@ export default function Login() {
       return
     }
 
-    if (mode === 'student' && !rollNo.trim()) {
-      setError('Please enter a valid register number.')
+    if (mode === 'student' && (!rollNo.trim() || !studentPassword)) {
+      setError('Enter both register number and password.')
       return
     }
 
@@ -44,7 +45,7 @@ export default function Login() {
         await loginAdmin(username.trim(), password)
         navigate('/')
       } else {
-        await loginStudent(rollNo.trim())
+        await loginStudent(rollNo.trim(), studentPassword)
         navigate('/find-my-seat')
       }
     } catch (err) {
@@ -103,15 +104,27 @@ export default function Login() {
               </label>
             </>
           ) : (
-            <label className="field">
-              <span>Register number</span>
-              <input
-                className="input"
-                placeholder="e.g. CS001"
-                value={rollNo}
-                onChange={(e) => setRollNo(e.target.value)}
-              />
-            </label>
+            <>
+              <label className="field">
+                <span>Register number</span>
+                <input
+                  className="input"
+                  placeholder="e.g. CS001"
+                  value={rollNo}
+                  onChange={(e) => setRollNo(e.target.value)}
+                />
+              </label>
+
+              <label className="field">
+                <span>Password</span>
+                <input
+                  className="input"
+                  type="password"
+                  value={studentPassword}
+                  onChange={(e) => setStudentPassword(e.target.value)}
+                />
+              </label>
+            </>
           )}
 
           {error && <p className="notice notice-error">{error}</p>}
