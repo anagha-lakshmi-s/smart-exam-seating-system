@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { hallsApi, errorText } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
@@ -9,11 +10,18 @@ import Toast from '../components/Toast'
 export default function Halls() {
   const { data, loading, error, reload } = useFetch(hallsApi.list)
   const halls = data || []
+  const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toast, setToast] = useState(null)
 
-  const availableSeats = halls.filter((h) => h.available).reduce((sum, h) => sum + h.capacity, 0)
+  const filteredHalls = halls.filter((hall) =>
+    hall.name.toLowerCase().includes(search.trim().toLowerCase())
+  )
+
+  const availableSeats = halls
+    .filter((h) => h.available)
+    .reduce((sum, h) => sum + h.capacity, 0)
 
   function openAdd() {
     setEditing(null)
@@ -82,6 +90,14 @@ export default function Halls() {
           </div>
 
           <div className="toolbar">
+            <input
+              type="search"
+              className="input"
+              placeholder="Search halls by name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search halls by name"
+            />
             <span className="spacer"></span>
             <button className="btn" onClick={openAdd}>+ Add hall</button>
           </div>
@@ -98,7 +114,7 @@ export default function Halls() {
                 </tr>
               </thead>
               <tbody>
-                {halls.map((h) => (
+                {filteredHalls.map((h) => (
                   <tr key={h.id}>
                     <td>{h.name}</td>
                     <td>{h.rows} rows × {h.benches} benches × {h.seatsPerBench} seats</td>
@@ -121,7 +137,14 @@ export default function Halls() {
                 ))}
               </tbody>
             </table>
-            {halls.length === 0 && <p className="empty">No halls yet. Click "Add hall" to create one.</p>}
+
+            {halls.length === 0 && (
+              <p className="empty">No halls yet. Click "Add hall" to create one.</p>
+            )}
+
+            {halls.length > 0 && filteredHalls.length === 0 && (
+              <p className="empty">No halls match "{search}". Try another name.</p>
+            )}
           </div>
         </>
       )}
