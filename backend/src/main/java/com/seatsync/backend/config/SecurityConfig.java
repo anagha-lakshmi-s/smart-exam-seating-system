@@ -1,3 +1,4 @@
+
 package com.seatsync.backend.config;
 
 import java.util.Base64;
@@ -107,6 +108,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/hello").permitAll()
                     .requestMatchers("/api/seating/slots")
                         .hasAnyRole("ADMIN", "STUDENT")
                     .requestMatchers("/api/seating/me")
